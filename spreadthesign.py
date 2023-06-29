@@ -50,6 +50,7 @@ def gerar_vetor_urls(urls_paginas):
 
     return urls
 
+#ooooi
 
 def obter_videos_site(urls):
     options = Options()
