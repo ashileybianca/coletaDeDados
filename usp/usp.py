@@ -35,7 +35,7 @@ pd.set_option('display.width', None)
 print(df_videos)
 
 # Salvar DataFrame em um arquivo CSV
-nome_arquivo = 'usp.csv'
+nome_arquivo = 'links_videos_usp.csv'
 formato = {
     'Palavra': str,
     'Link': str,

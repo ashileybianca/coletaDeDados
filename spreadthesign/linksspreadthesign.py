@@ -1,3 +1,5 @@
+'''Código feito somente para formatar os links da categorias e a quantidade de páginas em um csv'''
+
 import pandas as pd
 
 texto = """
@@ -329,4 +331,4 @@ for linha in linhas:
 df = pd.DataFrame(dados)
 print(df)
 # Para salvar em um arquivo CSV
-df.to_csv('dados.csv', index=False)
+df.to_csv('links_categorias_spreadthesign.csv', index=False)

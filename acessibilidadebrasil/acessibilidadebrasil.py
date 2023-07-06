@@ -66,7 +66,7 @@ pd.set_option('display.width', None)
 print(df_videos)
 
 
-nome_arquivo = 'acessibilidade_brasil.csv'
+nome_arquivo = 'links_videos_acessibilidade_brasil.csv'
 formato = {
     'Palavra': str,
     'Link': str,
