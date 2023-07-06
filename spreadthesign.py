@@ -8,74 +8,25 @@ from selenium.webdriver.chrome.options import Options
 from urllib.parse import urljoin
 import csv
 
-categorias = 'https://www.spreadthesign.com/pt.br/search/by-category/'
-urls_e_qtd_paginas = []
+def gerar_vetor_urls_cada_categoria(arquivo_csv):
 
-def obter_links_categorias(url):
-    response = requests.get(url)
-    html = response.text
-
-    links = []
-
-    soup = BeautifulSoup(html, 'html.parser')
-    searchable_elements = soup.find_all(class_='js-searchable')
-
-    for element in searchable_elements:
-        anchor_tags = element.find_all('a')
-        for tag in anchor_tags:
-            if 'href' in tag.attrs:
-                links.append('https://www.spreadthesign.com'+tag['href'])
-
-    return links
-
-def obter_qtd_paginas_categoria(url):
-    qtd_paginas = 1
-
-    while True:
-        response = requests.get(url)
-        html = response.text
-        soup = BeautifulSoup(html, 'html.parser')
-
-        link_prox_pagina = soup.find('div', class_='col-xs-4 search-pager-next').find('a')
-
-        if link_prox_pagina: #se existir link pra prox
-            qtd_paginas += 1
-            url_prox_pagina = link_prox_pagina['href']
-            url = urljoin(url, url_prox_pagina)
-            # combina a URL base atual (url) com o caminho relativo da próxima página (url_prox_pagina)
-        else:
-            break # quando não existir mais
-
-    return qtd_paginas
-
-def gerar_vetor_urls_cada_categoria(urls_e_qtd_paginas):
-
+    df = pd.read_csv(arquivo_csv, encoding='latin-1')
     urls_categoria = []
 
-    for url, num_paginas in urls_e_qtd_paginas:
+    for _, row in df.iterrows():
+        url = row['Link']
+        num_paginas = row['Quantidade de Paginas']
+
         for pagina in range(1, num_paginas + 1):
-            url_pagina = url + str(pagina)
+            url_pagina = url + '?q=&p='+ str(pagina)
             urls_categoria.append(url_pagina)
 
     return urls_categoria
 
-def gerar_link_e_qtd_paginas(url):
-
-    links = obter_links_categorias(url)
-
-    for link in links:
-        qtd_paginas = obter_qtd_paginas_categoria(link)
-        print(link,qtd_paginas)
-        urls_e_qtd_paginas.append((link, qtd_paginas))
-
-    return urls_e_qtd_paginas
-
-def obter_videos_site(categorias):
-    urls_e_qtd_paginas = gerar_link_e_qtd_paginas(categorias)
-
-    for url, num_paginas in urls_e_qtd_paginas:
-        urls_cada_categoria = gerar_vetor_urls_cada_categoria([(url, num_paginas)])
-
+def obter_videos_site():
+        
+        urls_categoria = gerar_vetor_urls_cada_categoria(arquivo_csv)
+        
         options = Options()
         #options.headless = True Ativado para que o navegador não seja aberto.
 
@@ -83,7 +34,7 @@ def obter_videos_site(categorias):
 
         lista_videos = []
 
-        for url in urls_cada_categoria:
+        for url in urls_categoria:
             driver.get(url)
             time.sleep(5)  # delay para carregar a página
 
@@ -134,6 +85,7 @@ def obter_videos_site(categorias):
                             # Obter o valor do atributo 'src' do vídeo
                             video_src = video_tag.get('src')
                             lista_videos.append((text, video_src))
+                            print(text, video_src)
                         else:
                             lista_videos.append((text, 'null'))
                     else:
@@ -148,9 +100,11 @@ def obter_videos_site(categorias):
         df_videos = pd.DataFrame(lista_videos, columns=['Palavra', 'Link'])
         df_videos['Instituicao'] = 'Spread the Sign' 
 
-    return df_videos
+        return df_videos
 
-df_videos = obter_videos_site(categorias)
+arquivo_csv = 'links_paginas.csv'
+df_videos = obter_videos_site()
+
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', None)
@@ -170,4 +124,3 @@ with open(nome_arquivo, 'w', newline='', encoding='utf-8') as arquivo_csv:
         escritor.writerow({campo: formato[campo](valor) for campo, valor in linha.items()})
 
 print("Dados salvos em arquivo CSV:", nome_arquivo)
-
