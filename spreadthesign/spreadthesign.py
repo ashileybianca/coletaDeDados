@@ -9,7 +9,6 @@ from urllib.parse import urljoin
 import csv
 
 def gerar_vetor_urls_cada_categoria(arquivo_csv):
-
     df = pd.read_csv(arquivo_csv, encoding='latin-1')
     urls_categoria = []
 
@@ -18,21 +17,21 @@ def gerar_vetor_urls_cada_categoria(arquivo_csv):
         num_paginas = row['Quantidade de Paginas']
 
         for pagina in range(1, num_paginas + 1):
-            url_pagina = url + '?q=&p='+ str(pagina)
+            url_pagina = url + '?q=&p=' + str(pagina)
             urls_categoria.append(url_pagina)
 
     return urls_categoria
 
-def obter_videos_site():
-        
-        urls_categoria = gerar_vetor_urls_cada_categoria(arquivo_csv)
-        
-        options = Options()
-        #options.headless = True Ativado para que o navegador não seja aberto.
+def obter_videos_site(arquivo_csv, nome_arquivo):
+    urls_categoria = gerar_vetor_urls_cada_categoria(arquivo_csv)
+    options = Options()
+    options.headless = True  # Ativado para que o navegador não seja aberto.
 
-        driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(options=options)
 
-        lista_videos = []
+    with open(nome_arquivo, 'w', newline='', encoding='utf-8') as arquivo_csv:
+        escritor = csv.writer(arquivo_csv)
+        escritor.writerow(['Palavra', 'Link', 'Instituicao'])
 
         for url in urls_categoria:
             driver.get(url)
@@ -54,7 +53,7 @@ def obter_videos_site():
                         small_tag.decompose()
 
                     # Extrair o texto do elemento 'a'
-                    text = a.get_text(strip=True) 
+                    text = a.get_text(strip=True)
                     # strip=True remove espaços em branco extras no início e no final do texto.
 
                     # Remover caracteres de controle e normalizar os caracteres Unidecode
@@ -84,43 +83,19 @@ def obter_videos_site():
                         if video_tag:
                             # Obter o valor do atributo 'src' do vídeo
                             video_src = video_tag.get('src')
-                            lista_videos.append((text, video_src))
-                            print(text, video_src)
+                            escritor.writerow([text, video_src, 'Spread the Sign'])
                         else:
-                            lista_videos.append((text, 'null'))
+                            escritor.writerow([text, 'null', 'Spread the Sign'])
                     else:
-                        lista_videos.append((text, 'null'))
+                        escritor.writerow([text, 'null', 'Spread the Sign'])
 
                     # Fechar a nova aba e voltar para a aba anterior
                     driver.close()
                     driver.switch_to.window(driver.window_handles[0])
 
-        driver.quit()
-        print(lista_videos)
-        df_videos = pd.DataFrame(lista_videos, columns=['Palavra', 'Link'])
-        df_videos['Instituicao'] = 'Spread the Sign' 
+    driver.quit()
+    print("Dados salvos em arquivo CSV:", nome_arquivo)
 
-        return df_videos
-
-arquivo_csv = 'links_paginas.csv'
-df_videos = obter_videos_site()
-
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-pd.set_option('display.width', None)
-print(df_videos)
-
-# Salvar DataFrame em um arquivo CSV
+arquivo_csv = 'links_categorias_spreadthesign.csv'
 nome_arquivo = 'spreadthesign.csv'
-formato = {
-    'Palavra': str,
-    'Link': str,
-    'Instituicao': str
-}
-with open(nome_arquivo, 'w', newline='', encoding='utf-8') as arquivo_csv:
-    escritor = csv.DictWriter(arquivo_csv, fieldnames=formato.keys())
-    escritor.writeheader()
-    for _, linha in df_videos.iterrows():
-        escritor.writerow({campo: formato[campo](valor) for campo, valor in linha.items()})
-
-print("Dados salvos em arquivo CSV:", nome_arquivo)
+obter_videos_site(arquivo_csv, nome_arquivo)
